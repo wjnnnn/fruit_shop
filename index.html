@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>水果缤纷 - 溯源中心</title>
+  <style>
+    /* 简单美观的 CSS 样式 */
+    body { font-family: 'PingFang SC', sans-serif; background: #f5f5f5; margin: 0; padding: 0; }
+    .header { background: #4CAF50; color: white; padding: 20px; text-align: center; }
+    .container { max-width: 600px; margin: -20px auto 20px; padding: 15px; }
+
+    .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .title { border-left: 4px solid #4CAF50; padding-left: 10px; font-weight: bold; margin-bottom: 10px; color: #333; }
+
+    /* 溯源列表样式 */
+    .trace-item { border-bottom: 1px dashed #eee; padding: 10px 0; display: flex; align-items: center; }
+    .fruit-icon { font-size: 2em; margin-right: 15px; }
+    .fruit-info { flex: 1; }
+    .tag { background: #e8f5e9; color: #4CAF50; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+
+    /* 商品列表样式 */
+    .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .shop-item { background: white; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #eee; }
+    .btn-buy { background: #ff9800; color: white; border: none; padding: 6px 15px; border-radius: 20px; margin-top: 8px; cursor: pointer; width: 100%; }
+
+    /* 弹窗样式 */
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999; justify-content: center; align-items: center; }
+    .modal-content { background: white; padding: 20px; border-radius: 10px; text-align: center; width: 80%; animation: pop 0.3s; }
+    .coupon-box { border: 2px dashed #ff5722; background: #fff3e0; padding: 15px; margin: 10px 0; color: #ff5722; font-weight: bold; font-size: 1.2em; }
+    @keyframes pop { from {transform: scale(0.8);} to {transform: scale(1);} }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h2>🍎 水果溯源中心</h2>
+  <p>区块链技术支持 · 全程可追溯</p>
+</div>
+
+<div class="container">
+  <!-- 溯源信息卡片 -->
+  <div class="card">
+    <div class="title">📦 本次扫码溯源信息</div>
+    <div id="trace-list" style="color: #666; font-size: 0.9em; text-align: center; padding: 20px;">
+      正在读取数据...
+    </div>
+  </div>
+
+  <!-- 商城卡片 -->
+  <div class="card">
+    <div class="title">🛒 在线补货 (极速达)</div>
+    <div class="shop-grid" id="shop-list"></div>
+  </div>
+</div>
+
+<!-- 优惠券弹窗 -->
+<div id="couponModal" class="modal">
+  <div class="modal-content">
+    <h3>🎉 恭喜获得优惠券！</h3>
+    <p>感谢您扫码查验真伪</p>
+    <div class="coupon-box">￥<span id="couponValue">0</span> 元无门槛券</div>
+    <button class="btn-buy" style="background:#4CAF50" onclick="closeModal()">开心收下</button>
+  </div>
+</div>
+
+<script>
+  // 1. 水果数据库
+  const fruitDB = [
+    { id: 0, name: "红富士苹果", origin: "山东烟台", quality: "A级", price: 10.5, img: "🍎" },
+    { id: 1, name: "进口香蕉", origin: "广西南宁", quality: "A级", price: 5.0, img: "🍌" },
+    { id: 2, name: "巨峰葡萄", origin: "新疆吐鲁番", quality: "特级", price: 8.5, img: "🍇" },
+    { id: 3, name: "赣南脐橙", origin: "江西赣南", quality: "A级", price: 6.0, img: "🍊" },
+    { id: 4, name: "皇冠梨", origin: "河北赵县", quality: "特级", price: 12.0, img: "🍐" }
+  ];
+
+  // 2. 初始化逻辑
+  window.onload = function() {
+    const params = new URLSearchParams(window.location.search);
+
+    // --- 逻辑A: 解析溯源数据 ---
+    const dataStr = params.get('d');
+    const traceContainer = document.getElementById('trace-list');
+
+    if (dataStr) {
+      traceContainer.innerHTML = "";
+      const items = dataStr.split('-');
+      items.forEach(item => {
+        const [id, weight] = item.split('_');
+        const fruit = fruitDB[parseInt(id)];
+        if(fruit) {
+          traceContainer.innerHTML += `
+                        <div class="trace-item">
+                            <div class="fruit-icon">${fruit.img}</div>
+                            <div class="fruit-info">
+                                <div><strong>${fruit.name}</strong></div>
+                                <div style="font-size:0.8em; color:#888;">产地: ${fruit.origin} | 品质: ${fruit.quality}</div>
+                                <div style="font-size:0.8em; color:#4CAF50;">本次购买: ${weight}kg</div>
+                            </div>
+                            <div class="tag">正品</div>
+                        </div>
+                    `;
+        }
+      });
+    } else {
+      traceContainer.innerHTML = "未检测到扫码数据";
+    }
+
+    // --- 逻辑B: 优惠券检测 ---
+    const couponVal = params.get('coupon');
+    if(couponVal) {
+      document.getElementById('couponValue').innerText = couponVal;
+      document.getElementById('couponModal').style.display = 'flex';
+      // 将优惠券存入本地存储，供下单页使用
+      localStorage.setItem('my_coupon', couponVal);
+    }
+
+    // --- 逻辑C: 渲染商城 ---
+    const shopContainer = document.getElementById('shop-list');
+    fruitDB.forEach(fruit => {
+      shopContainer.innerHTML += `
+                <div class="shop-item">
+                    <div style="font-size:2.5em">${fruit.img}</div>
+                    <div style="font-weight:bold; margin:5px 0">${fruit.name}</div>
+                    <div style="color:#ff5722">￥${fruit.price}/kg</div>
+                    <button class="btn-buy" onclick="goToOrder(${fruit.id})">立即下单</button>
+                </div>
+            `;
+    });
+  };
+
+  function closeModal() {
+    document.getElementById('couponModal').style.display = 'none';
+  }
+
+  // 跳转到下单页，通过URL传参
+  function goToOrder(fruitId) {
+    window.location.href = `order.html?id=${fruitId}`;
+  }
+</script>
+</body>
+</html>
